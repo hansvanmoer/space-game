@@ -5,7 +5,10 @@
 
 namespace Core{
 
-	class IOError : public std::runtime_error{};
+	class IOError : public std::runtime_error{
+	public:
+        IOError(const std::string &message);
+	};
 
 }
 

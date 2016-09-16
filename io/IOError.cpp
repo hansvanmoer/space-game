@@ -3,4 +3,4 @@
 using namespace Core;
 using namespace std;
 
-IOError::IOError(){}
+IOError::IOError(const string &message) : runtime_error(message){}
