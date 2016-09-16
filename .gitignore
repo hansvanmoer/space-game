@@ -9,6 +9,9 @@
 # The resulting executable
 /space
 
+# Generated documentation by doxygen
+/doc/*
+
 # CMake configuration files
 CMakeCache.txt
 CMakeFiles

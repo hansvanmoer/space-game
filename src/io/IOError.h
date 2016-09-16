@@ -2,7 +2,7 @@
 #define IO_IO_ERROR_H
 
 ///
-/// \file Contains basic IO errors
+/// \file IOError.h Contains basic IO errors
 ///
 
 #include <stdexcept>
@@ -10,7 +10,7 @@
 namespace Core{
 
     ///
-    /// \class A common base for all IO errors
+    /// A common base for all IO errors
     ///
 	class IOError : public std::runtime_error{
 	public:
