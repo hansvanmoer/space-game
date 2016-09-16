@@ -1,3 +1,15 @@
+#
+# The following files are ignored 
+#
+
+# Object and archive files
+*.o
+*.a
+
+# The resulting executable
+/space
+
+# CMake configuration files
 CMakeCache.txt
 CMakeFiles
 CMakeScripts
