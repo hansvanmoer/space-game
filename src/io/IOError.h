@@ -2,7 +2,7 @@
 #define IO_IO_ERROR_H
 
 ///
-/// \file IOError.h Contains basic IO errors
+/// Contains basic IO errors
 ///
 
 #include <stdexcept>
