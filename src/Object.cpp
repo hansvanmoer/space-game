@@ -47,6 +47,16 @@ void Object::do_dispose(ObjectContext& context) {
 
 }
 
+bool Object::operator==(const Object& o) const {
+    return id_ == o.id_;
+}
+
+
+bool Object::operator!=(const Object& o) const {
+    return id_ != o.id_;
+}
+
+
 MapObject::MapObject() : position_(){
 }
 
