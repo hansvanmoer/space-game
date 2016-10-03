@@ -5,8 +5,8 @@
  * Created on September 30, 2016, 1:33 PM
  */
 
-#ifndef GAME_STARSYSTEM_H
-#define	GAME_STARSYSTEM_H
+#ifndef GAME_ORBIT_H
+#define	GAME_ORBIT_H
 
 #include "Object.h"
 
