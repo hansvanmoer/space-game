@@ -3,7 +3,12 @@ project (space)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-add_subdirectory(io)
+if(UNIX)
+    add_definitions(-DTARGET_OS_UNIX_LIKE=1)
+elseif(WIN32)
+    add_definitions(-DTARGET_OS_WINDOWS=1)
+endif(UNIX)
 
-add_executable(space main.cpp)
-target_link_libraries(space PUBLIC space-io)
+find_package(Boost 1.54.0)
+
+add_executable(space Object.cpp Orbit.cpp main.cpp)

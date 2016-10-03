@@ -1,0 +1,8 @@
+[ 33%] Building CXX object io/CMakeFiles/space-io.dir/IOError.cpp.o
+[ 66%] Building CXX object io/CMakeFiles/space-io.dir/FileSystem.cpp.o
+Linking CXX static library libspace-io.a
+[ 66%] Built target space-io
+Scanning dependencies of target space
+[100%] Building CXX object CMakeFiles/space.dir/main.cpp.o
+Linking CXX executable space
+[100%] Built target space
