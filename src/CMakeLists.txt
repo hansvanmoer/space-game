@@ -11,4 +11,4 @@ endif(UNIX)
 
 find_package(Boost 1.54.0)
 
-add_executable(space Object.cpp Orbit.cpp main.cpp)
+add_executable(space Metrics.cpp Object.cpp Orbit.cpp main.cpp)
