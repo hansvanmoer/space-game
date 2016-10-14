@@ -8,6 +8,7 @@
 #include <cmath>
 #include <string>
 #include <stdexcept>
+#include <array>
 
 namespace Game {
 
@@ -32,7 +33,7 @@ namespace Game {
         /// the type of the coordinate
         ///
         using Scalar = Scalar_;
-
+        
         ///
         /// the coordinate along the x-axis
         ///
@@ -43,7 +44,7 @@ namespace Game {
         ///
         Scalar y;
 
-        ///sssssssss
+        ///
         /// Creates a vector with all coordinates set to zero
         ///
 
@@ -92,7 +93,7 @@ namespace Game {
                 return *this;
             }
         };
-
+        
         bool operator==(const Vector2<Scalar> &v) const {
             return x == v.x && y == v.y;
         };
@@ -141,6 +142,144 @@ namespace Game {
             return x == 0 && y == 0;
         };
     };
+    
+    template<typename Scalar_> class Transform2{
+    public:
+        
+        using Scalar = Scalar_;
+        
+        using Coordinate = typename std::array<Scalar, 6>::size_type;
+        
+        Transform2(std::initializer_list<Scalar> values) : values_(values){};
+        
+        Transform2() : values_{Scalar{1}, Scalar{}, Scalar{}, Scalar{}, Scalar{1}, Scalar{}}{};
+
+        static Transform2<Scalar> create_identity(){
+            return Transform2<Scalar>{Scalar{1}, Scalar{}, Scalar{}, Scalar{}, Scalar{1}, Scalar{}};
+        };
+        
+        static Transform2<Scalar> create_translation(Scalar dx, Scalar dy){
+            return Transform2<Scalar>{Scalar{1}, Scalar{}, dx, Scalar{}, Scalar{1}, dy};
+        };
+        
+        static Transform2<Scalar> create_scale(Scalar dx, Scalar dy){
+            return Transform2<Scalar>{dx, Scalar{}, Scalar{}, Scalar{},  dy, Scalar{}};
+        };
+        
+        static Transform2<Scalar> create_rotation(Scalar theta){
+            return Transform2<Scalar>{std::cos(theta), std::sin(theta), std::cos(theta), -std::sin(theta),  Scalar{}, Scalar{}};
+        };
+        
+        static Transform2<Scalar> create_rotation(Scalar px, Scalar py, Scalar theta){
+            Transform2<Scalar> result{create_translation(-px,-py)};
+            result*=create_rotation(theta);
+            result*=create_translation(px,py);
+            return result;
+        };
+        
+        Vector2<Scalar> transform(const Vector2<Scalar> &vector) const{
+            return Vector2<Scalar>{
+                values_[0] * vector.x + values_[1] * vector.y + values_[2],
+                values_[3] * vector.x + values_[4] * vector.y + values_[5]
+            };
+        };
+        
+        Transform2<Scalar> &concatenate(const Transform2<Scalar> &t){
+            //(A + t) * (B + v) = (AB) + (B*t) + v
+            
+            std::array<Scalar,6> new_values;
+            new_values[0] = values_[0]*t.values_[0] + values_[1] * t.values_[3];
+            new_values[1] = values_[0]*t.values_[1] + values_[1] * t.values_[4];
+            new_values[2] = t.values_[0]*values_[2] + t.values_[1]*values_[5] + t.values_[3];
+            
+            new_values[3] = values_[3]*t.values_[0] + values_[4] * t.values_[3];
+            new_values[4] = values_[3]*t.values_[1] + values_[4] * t.values_[4];
+            new_values[5] = t.values_[3]*values_[2] + t.values_[4]*values_[5] + t.values_[5];
+            
+            std::swap(values_, new_values);
+            return *this;
+        };
+        
+        Transform2<Scalar> &translate(Scalar dx, Scalar dy){
+            return concatenate(create_translation(dx, dy));
+        };
+        
+        Transform2<Scalar> &scale(Scalar sx, Scalar sy){
+            return concatenate(create_scale(sx, sy));
+        };
+        
+        Transform2<Scalar> &rotate(Scalar theta){
+            return concatenate(create_rotation(theta));
+        };
+        
+        Transform2<Scalar> &rotate(Scalar px, Scalar py, Scalar theta){
+            return concatenate(create_rotation(px, py, theta));
+        };
+        
+        Scalar operator[](Coordinate index) const{
+            return values_[index];
+        };
+        
+        Scalar &operator[](Coordinate index){
+            return values_[index];
+        };
+        
+        Scalar operator()(Coordinate row, Coordinate column) const{
+            return values_[row*3+column];
+        };
+        
+        Scalar &operator()(Coordinate row, Coordinate column){
+            return values_[row*3+column];
+        };
+        
+        Vector2<Scalar> operator()(const Vector2<Scalar> &vector) const{
+            return transform(vector);
+        };
+        
+        Scalar get(Coordinate index) const{
+            if(index > 6){
+                throw std::out_of_range{};
+            }
+            return values_[index];
+        };
+        
+        Scalar get(Coordinate row, Coordinate column) const{
+            if(row > 1 || column > 3){
+                throw std::out_of_range{};
+            }
+            return values_[row*3+column];
+        };
+        
+        void set(Coordinate index, Scalar value){
+            if(index > 6){
+                throw std::out_of_range{};
+            }
+            values_[index] = value;
+        };
+        
+        void set(Coordinate row, Coordinate column, Scalar value){
+            if(row > 1 || column > 3){
+                throw std::out_of_range{};
+            }
+            values_[row*3+column] = value;
+        };
+        
+        bool operator==(const Transform2<Scalar> &t) const{
+            return values_ == t.values_;
+        };
+        
+        bool operator!=(const Transform2<Scalar> &t) const{
+            return values_ != t.values_;
+        };
+        
+        Transform2 &operator*=(const Transform2<Scalar> &t){
+            return concatenate(t);
+        };
+        
+
+    private:
+        std::array<Scalar, 6> values_;
+    };
 
     template<typename Scalar> Vector2<Scalar> operator+(const Vector2<Scalar> &first, const Vector2<Scalar> &second) {
         return Vector2<Scalar>{first.x + second.x, first.y + second.y};
@@ -160,6 +299,16 @@ namespace Game {
 
     template<typename Scalar> Vector2<Scalar> operator/(const Vector2<Scalar> &first, Scalar factor) {
         return Vector2<Scalar>{first.x*factor, first.y * factor};
+    };
+    
+    template<typename Scalar> Vector2<Scalar> operator*(const Transform2<Scalar> &transform, const Vector2<Scalar> &vector){
+        return transform(vector);
+    };
+    
+    template<typename Scalar> Transform2<Scalar> operator*(const Transform2<Scalar> &first, const Transform2<Scalar>&second){
+        Transform2<Scalar> result{first};
+        result*=second;
+        return result;
     };
 
     ///
@@ -186,7 +335,7 @@ namespace Game {
             return Vector2<Scalar>{vector.x / norm, vector.y / norm};
         }
     };
-
+    
     ///
     /// Makes the compiler calculate the mathematical constant of pi.
     /// \return 3.14...
