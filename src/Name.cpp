@@ -57,7 +57,3 @@ std::size_t BufferedStringPool::load(std::istream& input) {
     return result;
 }
 
-
-
-
-

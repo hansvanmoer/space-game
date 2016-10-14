@@ -79,6 +79,24 @@ namespace Game{
     ///
     class BufferedStringPool : public StringPool{
     public:
+                
+        ///
+        /// Creates a new buffered string pool
+        ///
+        BufferedStringPool();
+        
+        ///
+        /// Adds the specified value to the string pool
+        /// \param value a pointer to a utf-8 encoded char array
+        /// \param the numbers of chars in the char array
+        ///
+        void add(const char *value, std::size_t length);
+        
+        ///
+        /// Adds the specified value to the string pool
+        /// \param value an utf-8 encoded string
+        ///
+        void add(const std::string &value);
         
         ///
         /// Destroys this string pool, deallocates the space used by the values
@@ -107,40 +125,10 @@ namespace Game{
         /// \return the number of names added
         ///
         std::size_t load(std::istream &input);
-        
-    protected:
-        
-        ///
-        /// Creates a new buffered string pool
-        ///
-        BufferedStringPool();
-        
-        ///
-        /// Adds the specified value to the string pool
-        /// \param value a pointer to a utf-8 encoded char array
-        /// \param the numbers of chars in the char array
-        ///
-        void add(const char *value, std::size_t length);
-        
-        ///
-        /// Adds the specified value to the string pool
-        /// \param value an utf-8 encoded string
-        ///
-        void add(const std::string &value);
-        
+
     private:
         std::vector<std::string> pool_;
         std::vector<std::string>::iterator next_;
-    };
-    
-    ///
-    /// \class a string pool loaded from a stream
-    ///
-    class StreamStringPool : public BufferedStringPool{
-    public:
-        
-
-        
     };
     
 }
