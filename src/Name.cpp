@@ -21,6 +21,10 @@ BufferedStringPool::BufferedStringPool() : pool_(), next_(pool_.end()) {
 BufferedStringPool::~BufferedStringPool() {
 }
 
+std::string BufferedStringPool::next(){
+    return *next_++;
+}
+
 bool BufferedStringPool::has_more() {
     return next_ != pool_.end();
 }

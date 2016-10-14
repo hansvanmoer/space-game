@@ -66,6 +66,14 @@ namespace Game{
         ///
         virtual void reset() = 0;
         
+        ///
+        /// Returns the next name in the pool
+        /// Names should only recur after reset() was called
+        /// The order of names is undefined and may change after subsequent calls to reset()
+        /// \return the next name in the pool
+        ///
+        virtual std::string next() = 0;
+        
     protected:
         
         ///
@@ -102,6 +110,11 @@ namespace Game{
         /// Destroys this string pool, deallocates the space used by the values
         ///
         virtual ~BufferedStringPool();
+        
+        ///
+        /// \return the next string from the pool
+        ///
+        std::string next();
         
         ///
         /// \return false if all names are used exactly once after the last call to reset(), true otherwise

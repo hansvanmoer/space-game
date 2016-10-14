@@ -1,16 +1,20 @@
 #include <iostream>
+#include <sstream>
 
-#include "Metrics.h"
-#include "String.h"
+#include "Name.h"
 
 using namespace Game;
 using namespace std;
 
 int main(int arg_cunt, const char **args) {
+    string s{"# Dit is een comment\n #Dit ook\nNaam1\n Naam\t"};
+    istringstream buffer{s};
+    BufferedStringPool pool;
+    pool.load(buffer);
+    pool.reset();
+    while(pool.has_more()){
+        cout << "\"" << pool.next() << "\"" << endl;
+    }
     
-    Transform2<double> t;
-    string s{" \tDit is een test\t "};
-    trim_whitespace(s);
-    cout << "\"" << s << "\"";
     return 0;
 }
