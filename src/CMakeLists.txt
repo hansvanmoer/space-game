@@ -25,13 +25,23 @@ endif(UNIX)
 #
 # Importing Boost
 #
-find_package(Boost 1.54.0 REQUIRED python)
+find_package(Boost 1.54.0 REQUIRED python filesystem)
 add_library(boost SHARED IMPORTED)
 set_property(TARGET boost PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS})
 
 add_library(boost-python SHARED IMPORTED)
 set_property(TARGET boost-python PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS})
 set_property(TARGET boost-python PROPERTY IMPORTED_LOCATION ${Boost_PYTHON_LIBRARY})
+
+add_library(boost-system SHARED IMPORTED)
+set_property(TARGET boost-system PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS})
+set_property(TARGET boost-system PROPERTY IMPORTED_LOCATION ${Boost_SYSTEM_LIBRARY})
+
+
+add_library(boost-filesystem SHARED IMPORTED)
+set_property(TARGET boost-filesystem PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS})
+set_property(TARGET boost-filesystem PROPERTY IMPORTED_LOCATION ${Boost_FILESYSTEM_LIBRARY})
+
 
 #
 # Importing Python
@@ -57,5 +67,5 @@ add_subdirectory(property)
 include_directories(${PYTHON_INCLUDE_DIRS})
 
 
-add_executable(space Script.cpp Metrics.cpp Object.cpp Orbit.cpp Name.cpp main.cpp)
-target_link_libraries(space property python boost-python)
+add_executable(space Script.cpp Metrics.cpp Object.cpp Orbit.cpp Name.cpp Module.cpp CLI.cpp main.cpp)
+target_link_libraries(space property python boost-python boost-filesystem boost-system)

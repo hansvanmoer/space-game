@@ -11,6 +11,10 @@
 #include <stdexcept>
 #include <string>
 
+#include <type_traits>
+
+#include "Type.h"
+
 namespace Game {
 
     using ApplicationId = std::string;
@@ -22,55 +26,67 @@ namespace Game {
 
     namespace ApplicationSystemPolicies {
 
-        template<typename System> struct ConstructorPolicy {
+        template<typename System > class HasShutDown {
+            template<typename T, void (T::*)()> struct Test;
 
-            template<typename... Args> static System *execute(Args && ... args) {
-                return new System{std::forward(args)...};
+            template<typename T > Type::True test(Test<System, System::shutdown> *);
+
+            template<typename T > Type::False test(...);
+        public:
+            static const bool result = sizeof (test(nullptr)) == sizeof (Type::True);
+        };
+
+        template<typename System> struct DestroyPolicy {
+
+            static void execute(System *system) {
+                delete system;
             };
 
         };
 
-        template<typename System> struct DestructorPolicy {
+        template<typename System> struct ShutdownAndDestroyPolicy {
 
-            static void execute(System &system) {
+            static void execute(System *system) {
+                try {
+                    system->destroy();
+                    delete system;
+                } catch (...) {
+                    delete system;
+                    throw;
+                }
             };
+
         };
 
-        template<typename System> struct ShutdownPolicy {
 
-            static void execute(System &system) {
-                system.shutdown();
-            };
-        };
+    };
 
-    }
-
-    template<typename System, typename InitializePolicy = ApplicationSystemPolicies::ConstructorPolicy<System>, typename ShutdownPolicy = ApplicationSystemPolicies::DestructorPolicy<System> > class ApplicationSystem {
+    template<typename System> class ApplicationSystem {
     private:
         static System *instance_;
+
+        using ShutDownPolicy = typename std::conditional<ApplicationSystemPolicies::HasShutDown<System>::result, ApplicationSystemPolicies::ShutdownAndDestroyPolicy<System>, ApplicationSystemPolicies::DestroyPolicy<System>>::type;
+
     public:
 
         template<typename... Args> static System &initialize(Args && ... args) {
             if (instance_) {
                 throw ApplicationError{System::id, "application system already started"};
             } else {
-                instance_ = InitializePolicy::execute(std::forward(args)...);
+                instance_ = new System{std::forward(args)...};
                 return *instance_;
             }
         };
 
         static void shutdown() {
             if (instance_) {
-                ShutdownPolicy::execute(instance_);
-                delete instance_;
+                ShutDownPolicy::execute(instance_);
             } else {
                 throw ApplicationError{System::id, "application system not started"};
             }
         };
 
     };
-
-
 
 }
 

@@ -3,20 +3,27 @@
 
 #include "Name.h"
 
+#include "CLI.h"
+
 using namespace Game;
+using namespace Game::CLI;
 using namespace std;
 
-int main(int arg_cunt, const char **args) {
-    string s{"# Dit is een comment\n #Dit ook\nNaam1\n Naam\t\nNaam 3\nNaam 4"};
-    istringstream buffer{s};
-    BufferedStringPool pool;
-    pool.load(buffer);
-    for (int i = 0; i < 8; ++i) {
-        pool.reset();
-        while (pool.has_more()) {
-            cout << "\"" << pool.next() << "\"" << endl;
-        }
-    }
 
+Call parse_arguments(int arg_count, const char **args) {
+    ArgumentParser parser{
+        ArgumentDefinition{"module", "module", 'm', "default", false},
+        ArgumentDefinition{"language", "language", 'l', "en", false}
+    };
+    return parser.parse(arg_count, args);
+};
+
+int main(int arg_count, const char **args) {
+    
+    cout << "starting application" << endl;
+    Call call = parse_arguments(arg_count, args);
+    
+    cout <<  call << endl;
+    
     return 0;
 }
