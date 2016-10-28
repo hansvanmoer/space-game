@@ -1,0 +1,114 @@
+%{
+
+#include <iostream>
+#include <string>
+
+#include "PropertyTask.h"
+
+#undef yylex
+#define yylex task.lexer->lex
+
+%}
+
+%start statements
+
+%defines
+
+%skeleton "lalr1.cc"
+
+%define api.prefix {Property}
+
+%define parser_class_name {Parser}
+
+%locations
+
+%parse-param { class ParserTask& task }
+
+%error-verbose
+
+%union {
+    std::string*    text;
+}
+
+%token END 0                "end of file"
+
+%token <text> TEXT          "text"
+
+%token NAME_VALUE_SEPARATOR  "name value separator"
+
+%token COMMENT_BEGIN        "comment begin"
+
+%token END_OF_LINE          "end of line"
+
+%token ESCAPE               "escape"
+
+%type <text>    value escaped_character empty_value
+
+%destructor { delete $$; } TEXT value escaped_character empty_value
+
+%%
+
+statements : 
+    END
+|   END_OF_LINE statements
+|   statement END
+|   statement END_OF_LINE statements
+|   comment END_OF_LINE statements
+|   comment END
+
+statement : 
+    TEXT NAME_VALUE_SEPARATOR value {
+        task.put_value(*$1, *$3);
+        delete $1;
+        delete $3;
+    }
+;
+
+value :
+    empty_value{
+        $$ = new std::string{*$1};
+        delete $1;
+    }
+|   TEXT value{
+        $$ = new std::string{*$1 + *$2};
+        delete $1;
+        delete $2;
+    }
+|   escaped_character value{
+        $$ = new std::string{*$1 + *$2};
+        delete $1;
+        delete $2;
+    }
+;
+
+empty_value :
+    %empty {
+        $$ = new std::string{};
+    }
+;
+
+escaped_character :
+    ESCAPE END_OF_LINE {
+        $$ = new std::string{"\n"};
+    }
+|   ESCAPE COMMENT_BEGIN {
+        $$ = new std::string{"#"};
+    }
+|   ESCAPE NAME_VALUE_SEPARATOR {
+        $$ = new std::string{"="};
+    }
+|   ESCAPE ESCAPE {
+        $$ = new std::string{"\\"};
+    }
+;   
+
+comment :
+    COMMENT_BEGIN TEXT{
+        delete $2;
+    }
+
+%%
+
+void Property::Parser::error(Property::location const &location , std::string const &msg){
+    task.report_error(msg, static_cast<int>(location.begin.line), static_cast<int>(location.begin.column));
+}

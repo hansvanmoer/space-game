@@ -1,0 +1,57 @@
+%{
+
+#include <iostream>
+
+#include "PropertyLexer.h"
+
+typedef Property::Parser::token token;
+typedef Property::Parser::token_type token_type;
+
+/*
+* yyterminate returns 0 by default, which is not implicitly convertible with an enum in C++11
+*/
+#define yyterminate() return token::END
+
+%}
+
+%option c++
+%option noyywrap
+%option prefix="Property"
+
+COMMENT_BEGIN           "#"
+
+TEXT                    [^\n\r=#\\]*
+
+WHITESPACE              [\t ]*
+
+NAME_VALUE_SEPARATOR    "="
+
+NEW_LINE                [\n\r]
+
+ESCAPE                  "\\"
+
+%%
+
+{NAME_VALUE_SEPARATOR} {return token::NAME_VALUE_SEPARATOR;}
+
+{TEXT}  {yylval->text=new std::string(yytext, yyleng);return token::TEXT;}
+
+{COMMENT_BEGIN}   {return token::COMMENT_BEGIN;}
+
+{NEW_LINE}  {return token::END_OF_LINE;}
+
+{ESCAPE}  {return token::ESCAPE;}
+
+%%
+
+#ifdef yylex
+#undef yylex
+#endif
+
+int PropertyFlexLexer::yylex()
+{
+    std::cerr << "PropertyFlexLexer::yylex() called but this should not happen" << std::endl;
+    return 0;
+}
+
+Property::PropertyLexer::PropertyLexer(std::istream *input, std::ostream *output) : PropertyFlexLexer(input, output){};

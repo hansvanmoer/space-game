@@ -8,9 +8,12 @@
 #ifndef GAME_NAME_H
 #define	GAME_NAME_H
 
+#include "Script.h"
+
 #include <string>
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 
 namespace Game{
     
@@ -24,9 +27,7 @@ namespace Game{
         /// Destroys this name generator
         ///
         virtual ~NameGenerator();
-        
-        
-        
+
         ///
         /// \param entity the entity to name
         /// \return the next name in utf-8 encoding generated from this generator
@@ -144,6 +145,28 @@ namespace Game{
         std::vector<std::string>::iterator next_;
     };
     
+    namespace Script{
+    
+        class StringPoolHandle : public BasicHandle<BufferedStringPool>{
+        public:
+            StringPoolHandle();
+            
+            StringPoolHandle(BufferedStringPool *pool);
+            
+            std::string next();
+            
+            void add(const std::string &value);
+        };
+        
+        class StringPoolManager : public ObjectManager<BufferedStringPool, StringPoolHandle>{
+        public:
+            
+            StringPoolHandle create_from_file(const Id &id, const std::string path);
+            
+            StringPoolHandle create_empty(const Id &id);
+            
+        };
+    }
 }
 
 #endif	/* NAME_H */
