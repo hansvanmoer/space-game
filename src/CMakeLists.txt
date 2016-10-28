@@ -58,4 +58,4 @@ include_directories(${PYTHON_INCLUDE_DIRS})
 
 
 add_executable(space Script.cpp Metrics.cpp Object.cpp Orbit.cpp Name.cpp main.cpp)
-target_link_libraries(space python boost-python)
+target_link_libraries(space property python boost-python)
