@@ -3,6 +3,7 @@
 using namespace std;
 
 using namespace Game;
+using namespace Game::Parser;
 
 ParseError::ParseError(const std::string& message) : runtime_error(message){
 }
