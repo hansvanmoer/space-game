@@ -10,6 +10,8 @@
 #include <string>
 #include <set>
 
+#include <boost/filesystem.hpp>
+
 namespace Game{
     
     struct Version{
@@ -50,12 +52,16 @@ namespace Game{
     class ModuleSystem{
     public:
         
+        static const ApplicationId id;
+        
         ModuleSystem(const ModuleId &module_id);
         
         ~ModuleSystem();
         
         void shutdown();
         
+    private:
+        boost::filesystem::path path_;
     };
     
 }

@@ -60,3 +60,15 @@ FileSystem::FileSystem(const CLI::Call& call) {
     
 #endif
 }
+
+boost::filesystem::path FileSystem::data_path() const {
+    return data_path_;
+}
+
+boost::filesystem::path FileSystem::modules_path() const {
+    return modules_path_;
+}
+
+boost::filesystem::path FileSystem::settings_path() const {
+    return settings_path_;
+}

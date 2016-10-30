@@ -67,5 +67,5 @@ add_subdirectory(property)
 include_directories(${PYTHON_INCLUDE_DIRS})
 
 
-add_executable(space Application.cpp Script.cpp Metrics.cpp Object.cpp Orbit.cpp Name.cpp Module.cpp CLI.cpp Parser.cpp  FileSystem.cpp main.cpp)
+add_executable(space Log.cpp Application.cpp Script.cpp Metrics.cpp Object.cpp Orbit.cpp Name.cpp Module.cpp CLI.cpp Parser.cpp  FileSystem.cpp main.cpp)
 target_link_libraries(space property python boost-python boost-filesystem boost-system)

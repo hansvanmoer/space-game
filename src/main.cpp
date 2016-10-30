@@ -6,11 +6,13 @@
 #include "CLI.h"
 
 #include "FileSystem.h"
+#include "Log.h"
 
 using namespace Game;
 using namespace Game::CLI;
 using namespace std;
 
+static Log::Logger logger = Log::create_logger("default");
 
 Call parse_arguments(int arg_count, const char **args) {
     ArgumentParser parser{
@@ -22,11 +24,12 @@ Call parse_arguments(int arg_count, const char **args) {
 };
 
 int main(int arg_count, const char **args) {
+        
+    Log::configure_logger("default", Log::Level::DEBUG, &std::cout);
+    logger.info("starting application");
     
-    cout << "starting application" << endl;
     Call call = parse_arguments(arg_count, args);
-    
-    cout <<  call << endl;
+    logger.debug("initializing with the following parameters:").info_lines(call);
     ApplicationSystemGuard<FileSystem> file_system_guard(call);
     
     

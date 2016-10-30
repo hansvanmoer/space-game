@@ -3,6 +3,7 @@
 using namespace Game;
 using namespace std;
 
+#include "FileSystem.h"
 Version::Version() : Version(1,0,0){}
 
 Version::Version(unsigned int major_, unsigned int minor_, unsigned int bugfix_){
@@ -56,6 +57,14 @@ bool Version::operator>=(const Version& version) const {
 ModuleDescriptor::ModuleDescriptor() : id(), version(), default_language_id(), supported_language_ids(){
 }
 
+const ApplicationId ModuleSystem::id{"module"};
+
+
 ModuleSystem::ModuleSystem(const ModuleId& module_id) {
+    namespace fs = boost::filesystem;
+    path_ = ApplicationSystem<FileSystem>::instance().modules_path() / module_id;
+    if(!fs::is_directory(path_)){
+        throw ApplicationError{id, "module folder not found: " + path_.string()};
+    }
     
 }

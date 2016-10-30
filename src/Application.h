@@ -144,6 +144,19 @@ namespace Game {
                 throw ApplicationError{System::id, "application system not started"};
             }
         };
+        
+        ///
+        /// Returns an instance of the subsystem
+        /// \return a reference to the instance of the subsystem
+        /// \throw ApplicationError if the instance is not initialized
+        ///
+        static System &instance(){
+            if (instance_) {
+                return *instance_;
+            } else {
+                throw ApplicationError{System::id, "application system not started"};
+            }
+        };
 
     };
     
