@@ -29,11 +29,32 @@ namespace Game {
             ValueNotFoundError(const std::string &message);
         };
 
+        namespace Helper {
+
+            template<typename Value> struct ParsePolicy {
+            public:
+
+                static bool execute(const std::string &str, Value &result) {
+                    using namespace std;
+                    ostringstream buffer{str};
+                    buffer >> result;
+                    return !buffer.bad();
+                };
+            };
+            
+            template<> struct ParsePolicy<std::string> {
+            public:
+
+                static bool execute(const std::string &str, std::string &result) {
+                    result = str;
+                    return true;
+                };
+            };
+
+        }
+
         template<typename Value> bool from_string(const std::string &str, Value &result) {
-            using namespace std;
-            ostringstream buffer{str};
-            buffer >> result;
-            return !buffer.bad();
+            return Helper::ParsePolicy<Value>::execute(str, result);
         };
 
         template<typename Value, typename ForwardIterator> bool from_range(ForwardIterator begin, ForwardIterator end, Value &result) {
@@ -47,7 +68,7 @@ namespace Game {
 
         template<typename Map, typename Value> bool from_map(const Map &map, const typename Map::key_type &key, Value &result) {
             auto found = map.find(key);
-            if (key == map.end()) {
+            if (found != map.end()) {
                 return from_pair(*found, result);
             } else {
                 return false;
@@ -63,7 +84,7 @@ namespace Game {
         template<typename Map, typename Value> void required_from_map(const Map &map, const typename Map::key_type &key, Value & result) {
             using namespace std;
             auto found = map.find(key);
-            if (key == map.end()) {
+            if (found != map.end()) {
                 if (!from_pair(*found, result)) {
                     ostringstream buffer;
                     buffer << "can't parse value for key '" << key << "'";
@@ -120,7 +141,7 @@ namespace Game {
 
         template<typename Map, typename InsertIterator> bool sequence_from_map(const Map &map, const typename Map::key_type &key, char delimiter, InsertIterator result) {
             auto found = map.find(key);
-            if (key == map.end()) {
+            if (found != map.end()) {
                 return sequence_from_pair(*found, delimiter, result);
             } else {
                 return false;
@@ -130,7 +151,7 @@ namespace Game {
         template<typename Map, typename InsertIterator> bool required_sequence_from_map(const Map &map, const typename Map::key_type &key, char delimiter, InsertIterator result) {
             using namespace std;
             auto found = map.find(key);
-            if (key == map.end()) {
+            if (found != map.end()) {
                 if (!sequence_from_pair(*found, delimiter, result)) {
                     ostringstream buffer;
                     buffer << "can't parse value for key '" << key << "'";

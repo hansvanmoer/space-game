@@ -14,11 +14,10 @@ ArgumentError::ArgumentError(const std::string& msg) : runtime_error(msg) {
 ArgumentDefinition::ArgumentDefinition(const std::string& name_, const std::string& long_switch_, char short_switch_, const std::string& default_value_, bool required_) : name(name_), long_switch(long_switch_), short_switch(short_switch_), default_value(default_value_), required(required_) {
 }
 
-Call::Call() : application_name(), current_path(), arguments(){}
+Call::Call() : application_run_path(), arguments(){}
 
 ostream &Game::CLI::operator<<(ostream &output, const Call &call){
-    output << "application name: '" << call.application_name << '\'' << endl;
-    output << "run path: '" << call.current_path << '\'' << endl;
+    output << "run path: '" << call.application_run_path << '\'' << endl;
     output << "arguments:" << endl;
     for(auto entry : call.arguments){
         output << "   " << entry.first << " = '" << entry.second << '\'' << endl;
@@ -106,9 +105,7 @@ Call ArgumentParser::parse(int arg_count, const char** args) const {
    
     Call call;
     
-    boost::filesystem::path path{args[0]};
-    call.application_name = path.filename().string();
-    call.current_path = path.parent_path().string();
+    call.application_run_path = boost::filesystem::path{args[0]};
     
     int arg_index = 1;
     char short_switch;

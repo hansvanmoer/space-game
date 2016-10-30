@@ -53,4 +53,9 @@ bool Version::operator>=(const Version& version) const {
     return version.operator <=(*this);
 }
 
-ModuleDescriptor::ModuleDescriptor() : id(), version(), default_language_id(), supported_language_ids(){}
+ModuleDescriptor::ModuleDescriptor() : id(), version(), default_language_id(), supported_language_ids(){
+}
+
+ModuleSystem::ModuleSystem(const ModuleId& module_id) {
+    
+}

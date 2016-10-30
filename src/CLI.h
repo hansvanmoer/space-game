@@ -33,14 +33,9 @@ namespace Game{
         struct Call{
             
             ///
-            /// the name of the current application
+            /// the current application run folder
             ///
-            std::string application_name;
-            
-            ///
-            /// a string representation of the folder where the application is running
-            ///
-            std::string current_path;
+            boost::filesystem::path application_run_path;
             
             ///
             /// a map with the arguments of the current application

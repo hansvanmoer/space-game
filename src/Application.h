@@ -10,8 +10,8 @@
 
 #include <stdexcept>
 #include <string>
-
 #include <type_traits>
+#include <iostream>
 
 #include "Type.h"
 
@@ -22,6 +22,11 @@ namespace Game {
     class ApplicationError : public std::runtime_error {
     public:
         ApplicationError(const ApplicationId &id, const std::string &message);
+    
+        ApplicationId id() const;
+        
+    private:
+        ApplicationId id_;
     };
 
     namespace ApplicationSystemPolicies {
@@ -29,11 +34,11 @@ namespace Game {
         template<typename System > class HasShutDown {
             template<typename T, void (T::*)()> struct Test;
 
-            template<typename T > Type::True test(Test<System, System::shutdown> *);
+            template<typename T> static Type::True test(Test<T, &T::shutdown> *);
 
-            template<typename T > Type::False test(...);
+            template<typename T> static Type::False test(...);
         public:
-            static const bool result = sizeof (test(nullptr)) == sizeof (Type::True);
+            static const bool result = sizeof (test<System>(nullptr)) == sizeof (Type::True);
         };
 
         template<typename System> struct DestroyPolicy {
@@ -48,7 +53,7 @@ namespace Game {
 
             static void execute(System *system) {
                 try {
-                    system->destroy();
+                    system->shutdown();
                     delete system;
                 } catch (...) {
                     delete system;
@@ -73,7 +78,7 @@ namespace Game {
             if (instance_) {
                 throw ApplicationError{System::id, "application system already started"};
             } else {
-                instance_ = new System{std::forward(args)...};
+                instance_ = new System{std::forward<Args...>(args)...};
                 return *instance_;
             }
         };
@@ -87,7 +92,28 @@ namespace Game {
         };
 
     };
+    
+    template<typename System> System *ApplicationSystem<System>::instance_;
 
+    template<typename System> struct ApplicationSystemGuard{
+        
+        template<typename... Args> ApplicationSystemGuard(Args &&... args){
+            ApplicationSystem<System>::initialize(std::forward<Args...>(args)...);
+        };
+        
+        ~ApplicationSystemGuard(){
+            using namespace std;
+            try{
+                ApplicationSystem<System>::shutdown();
+            }catch(std::exception &e){
+                cout << "unable to shutdown application system '" << System::id << "': " << e.what() << endl;
+            }catch(...){
+                cout << "unable to shutdown application system '" << System::id << "': unknown error" << endl;
+            }
+        };
+        
+    };
+    
 }
 
 #endif	/* SINGLETON_H */
