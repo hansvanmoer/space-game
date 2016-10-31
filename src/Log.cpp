@@ -5,7 +5,7 @@ using namespace Game::Log;
 
 using namespace std;
 
-Output::Output(LoggerFactory &factory, const Id &id) : factory_(factory), id_(id), level_(Level::NONE) {
+Output::Output(LoggerFactory &factory, const Id &id) : factory_(factory), id_(id), level_(Level::none) {
     ostream *ignore = factory_.ignore();
     debug_output_ = ignore;
     info_output_ = ignore;
@@ -18,35 +18,35 @@ void Output::configure(Level level, std::ostream *stream) {
     ostream *ignore = factory_.ignore();
     level_ = level;
     switch (level_) {
-        case Level::DEBUG:
+        case Level::debug:
             debug_output_ = stream;
             info_output_ = stream;
             warning_output_ = stream;
             error_output_ = stream;
             fatal_output_ = stream;
             break;
-        case Level::INFO:
+        case Level::info:
             debug_output_ = ignore;
             info_output_ = stream;
             warning_output_ = stream;
             error_output_ = stream;
             fatal_output_ = stream;
             break;
-        case Level::WARNING:
+        case Level::warning:
             debug_output_ = ignore;
             info_output_ = ignore;
             warning_output_ = stream;
             error_output_ = stream;
             fatal_output_ = stream;
             break;
-        case Level::ERROR:
+        case Level::error:
             debug_output_ = ignore;
             info_output_ = ignore;
             warning_output_ = ignore;
             error_output_ = stream;
             fatal_output_ = stream;
             break;
-        case Level::FATAL:
+        case Level::fatal:
             debug_output_ = ignore;
             info_output_ = ignore;
             warning_output_ = ignore;

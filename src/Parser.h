@@ -60,7 +60,7 @@ namespace Game {
 
                 static bool execute(const std::string &str, Value &result) {
                     using namespace std;
-                    ostringstream buffer{str};
+                    istringstream buffer{str};
                     buffer >> result;
                     return !buffer.bad();
                 };
@@ -174,26 +174,47 @@ namespace Game {
             required_from_map(map, key, value);
             return value;
         };
+        
+        ///
+        /// \class Helper type that is used to determine the type for the elements of the sequence to be parsed. This is needed because insert iterators have a void value_type
+        ///
+        template<typename Element_> struct Sequence{
+            using Element = Element_;
+            
+            ///
+            /// The delimiter used in the sequence
+            ///
+            char delimiter;
+            
+            ///
+            /// Creates a new sequence definition with the standard delimiter (comma)
+            ///
+            Sequence() : delimiter(','){};
+            
+            ///
+            /// Creates a new sequence definition with the specified delimiter
+            /// \param delimiter_ the delimiter used in this sequence
+            ///
+            Sequence(char delimiter_) : delimiter(delimiter_){};
+        };
 
         ///
         /// Parses a basic sequence from a string
         /// e.g. "1,2,12,3.12" with delimiter ',' results in the elements 1 , 2 , 12 and 3.12 being parsed
         /// If any part of the sequence fails, no results will be pushed to the result insert iterator
         /// \param str the formatted input string
-        /// \param delimiter a delimiter character
+        /// \param sequence contains all information needed to parse the sequence (such as element delimiter and type)
         /// \param result an insert iterator to store the result
         /// \return true if the sequence was parsed successfully, false otherwise
         ///
-        template<typename InsertIterator> bool sequence_from_string(const std::string &str, char delimiter, InsertIterator result) {
+        template<typename Value, typename InsertIterator> bool sequence_from_string(const std::string &str, Sequence<Value> sequence, InsertIterator result) {
             using namespace std;
-            using Value = typename iterator_traits<InsertIterator>::value_type;
-
             if (str.empty()) {
                 return true;
             } else {
                 vector<Value> buffer;
                 string::const_iterator begin = str.begin();
-                string::const_iterator end = find(begin, str.end(), delimiter);
+                string::const_iterator end = find(begin, str.end(), sequence.delimiter);
                 while (begin != end) {
                     Value value;
                     if (from_range(begin, end, value)) {
@@ -207,7 +228,7 @@ namespace Game {
                         if (begin == str.end()) {
                             end = begin;
                         } else {
-                            end = find(begin, str.end(), delimiter);
+                            end = find(begin, str.end(), sequence.delimiter);
                         }
                     }
                 }
@@ -215,18 +236,18 @@ namespace Game {
                 return true;
             }
         };
-
+        
         ///
         /// Parses a basic sequence from the second field of a pair
         /// e.g. "1,2,12,3.12" with delimiter ',' results in the elements 1 , 2 , 12 and 3.12 being parsed
         /// If any part of the sequence fails, no results will be pushed to the result insert iterator
         /// \param pair the pair (key,  formatted input string)
-        /// \param delimiter a delimiter character
+        /// \param sequence contains all information needed to parse the sequence (such as element delimiter and type)
         /// \param result an insert iterator to store the result
         /// \return true if the sequence was parsed successfully, false otherwise
         ///
-        template<typename Pair, typename InsertIterator> bool sequence_from_pair(const Pair &pair, char delimiter, InsertIterator result) {
-            return sequence_from_string(pair.second, delimiter, result);
+        template<typename Value, typename Pair, typename InsertIterator> bool sequence_from_pair(const Pair &pair, Sequence<Value> sequence, InsertIterator result) {
+            return sequence_from_string(pair.second, sequence, result);
         };
 
         ///
@@ -235,14 +256,14 @@ namespace Game {
         /// If any part of the sequence fails, no results will be pushed to the result insert iterator
         /// \param map the map containing the formatted input string)
         /// \param key the key used to find the formatted input string in the map
-        /// \param delimiter a delimiter character
+        /// \param sequence contains all information needed to parse the sequence (such as element delimiter and type)
         /// \param result an insert iterator to store the result
         /// \return true if the sequence was parsed successfully, false otherwise
         ///
-        template<typename Map, typename InsertIterator> bool sequence_from_map(const Map &map, const typename Map::key_type &key, char delimiter, InsertIterator result) {
+        template<typename Value, typename Map, typename InsertIterator> bool sequence_from_map(const Map &map, const typename Map::key_type &key, Sequence<Value> sequence, InsertIterator result) {
             auto found = map.find(key);
             if (found != map.end()) {
-                return sequence_from_pair(*found, delimiter, result);
+                return sequence_from_pair(*found, sequence, result);
             } else {
                 return false;
             }
@@ -254,16 +275,16 @@ namespace Game {
         /// If any part of the sequence fails, no results will be pushed to the result insert iterator
         /// \param map the map containing the formatted input string)
         /// \param key the key used to find the formatted input string in the map
-        /// \param delimiter a delimiter character
+        /// \param sequence contains all information needed to parse the sequence (such as element delimiter and type)
         /// \param result an insert iterator to store the result
         /// \throw ValueSyntaxError if the value could not be parsed
         /// \throw ValueNotFoundError if the value could not be found
         ///
-        template<typename Map, typename InsertIterator> void required_sequence_from_map(const Map &map, const typename Map::key_type &key, char delimiter, InsertIterator result) {
+        template<typename Value, typename Map, typename InsertIterator> void required_sequence_from_map(const Map &map, const typename Map::key_type &key, Sequence<Value> sequence, InsertIterator result) {
             using namespace std;
             auto found = map.find(key);
             if (found != map.end()) {
-                if (!sequence_from_pair(*found, delimiter, result)) {
+                if (!sequence_from_pair(*found, sequence, result)) {
                     ostringstream buffer;
                     buffer << "can't parse value for key '" << key << "'";
                     throw ValueSyntaxError{buffer.str()};
@@ -274,6 +295,7 @@ namespace Game {
                 throw ValueNotFoundError{buffer.str()};
             }
         };
+        
     }
 
 }

@@ -5,12 +5,17 @@
 #ifndef MODULE_H
 #define	MODULE_H
 
-#include "Application.h"
+
 
 #include <string>
-#include <set>
+#include <vector>
+#include <iostream>
 
 #include <boost/filesystem.hpp>
+
+
+#include "Application.h"
+#include "property/Property.h"
 
 namespace Game{
     
@@ -36,6 +41,10 @@ namespace Game{
         bool operator>=(const Version &version) const;
     };
     
+    std::istream &operator>>(std::istream &input, Version &version);
+    
+    std::ostream &operator<<(std::ostream &output, const Version &version);
+    
     using ModuleId = std::string;
     
     using LanguageId = std::string;
@@ -44,10 +53,32 @@ namespace Game{
         ModuleId id;
         Version version;
         LanguageId default_language_id;
-        std::set<LanguageId> supported_language_ids;
-        
+        std::vector<LanguageId> supported_language_ids;
+
+        ///
+        /// Creates an empty module descriptor
+        ///
         ModuleDescriptor();
+        
+        ///
+        /// Creates a module descriptor based on the supplied properties
+        ///
+        /// The following properties are used:
+        /// version : the module version
+        /// default_language_id : the default language ID
+        /// supported_language_ids : a comma separated list of language ID's
+        ///
+        /// If the default language ID is not a supported language ID, it will be made one
+        /// If the supported language ID sequence contains duplicates, they will be ignored
+        ///
+        /// \param id the module id
+        /// \param properties the property map
+        ///
+        ModuleDescriptor(const ModuleId &id, const Property::Map &properties);
+        
     };
+    
+    std::ostream &operator<<(std::ostream &output, const ModuleDescriptor &descriptor);
     
     class ModuleSystem{
     public:
@@ -56,12 +87,11 @@ namespace Game{
         
         ModuleSystem(const ModuleId &module_id);
         
-        ~ModuleSystem();
-        
-        void shutdown();
-        
     private:
         boost::filesystem::path path_;
+        ModuleDescriptor descriptor_;
+        
+        void load_module_descriptor(const ModuleId &id);
     };
     
 }

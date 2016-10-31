@@ -10,4 +10,4 @@ FLEX_TARGET(PropertyLexer PropertyLexer.lpp  ${CMAKE_CURRENT_BINARY_DIR}/Propert
 ADD_FLEX_BISON_DEPENDENCY(PropertyLexer PropertyParser)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-add_library(property ${BISON_PropertyParser_OUTPUTS} ${FLEX_PropertyLexer_OUTPUTS})
+add_library(property ${BISON_PropertyParser_OUTPUTS} ${FLEX_PropertyLexer_OUTPUTS} PropertyTask.cpp Property.cpp)

@@ -18,7 +18,7 @@ namespace Game {
         /// \class Models the log level
         ///
         enum class Level {
-            DEBUG, INFO, WARNING, ERROR, FATAL, NONE
+            none, debug, info, warning, error, fatal
         };
 
         ///
@@ -138,7 +138,7 @@ namespace Game {
 
                 static void execute(std::ostream &output, char delimiter, Arg &&value, Args && ... values) {
                     output << delimiter << value;
-                    Append < Args...>::execute(output, std::forward <Args>(values) ...);
+                    Append < Args...>::execute(output, delimiter, std::forward <Args>(values) ...);
                 };
             };
 

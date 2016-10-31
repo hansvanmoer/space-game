@@ -17,7 +17,6 @@ namespace Game{
         struct False{
             char b[2];
         };
-        
     };
     
 }
