@@ -8,10 +8,15 @@
 #ifndef GAME_SCRIPT_H
 #define	GAME_SCRIPT_H
 
+#include "Application.h"
+#include "Log.h"
+
 #include <unordered_map>
 #include <stdexcept>
+#include <iostream>
+#include <mutex>
 
-#include "Application.h"
+#include <boost/python.hpp>
 
 namespace Game {
 
@@ -46,7 +51,7 @@ namespace Game {
         
         template<typename Object> class BasicHandle{
         public:    
-            BasicHandle() : object_(){};
+            BasicHandle();;
             
             BasicHandle(Object *object) : object_(object){};
             
@@ -148,8 +153,145 @@ namespace Game {
         private:
             std::unordered_map<Id, Object *> objects_;
         };
+        
+        class Writer{
+        public:
+            
+            virtual ~Writer();
+            
+            virtual void write(const char *output) = 0;
+            
+            virtual void flush() = 0;
+        protected:
+            Writer();
+        private:
+            Writer(const Writer &) = delete;
+            Writer &operator=(const Writer &) = delete;
+        };
+        
+        class LoggerWriter : public Writer{
+        public:
+            
+            LoggerWriter(const Log::Logger &logger, Log::Level level = Log::Level::debug);
+            
+            ~LoggerWriter();
+            
+            void write(const char *output);
+            
+            void flush();
+            
+        private:
+            Log::LogLinesAdapter<std::string> logger_;
+            std::ostringstream buffer_;
+            bool dirty_;
+        };
+        
+        class IgnoreWriter : public Writer{
+        public:
+            IgnoreWriter();
+            
+            ~IgnoreWriter();
+            
+            void write(const char *output);
+            
+            void flush();
+        };
+        
+        class StandardWriter : public Writer{
+        public:
+            StandardWriter();
+
+            StandardWriter(const StandardWriter &);
+            
+            StandardWriter &operator=(const StandardWriter &);
+            
+            ~StandardWriter();
+            
+            void write(const char *output);
+            
+            void flush();
+            
+        };
+        
+        class ErrorWriter : public Writer{
+        public:
+            ErrorWriter();
+            
+            ErrorWriter(const ErrorWriter &);
+            
+            ErrorWriter &operator=(const ErrorWriter &);
+            
+            ~ErrorWriter();
+            
+            void write(const char *output);
+            
+            void flush();
+        };
+        
+        class ScriptSystem;
+        
+        class Runnable{
+        public:
+            
+            Runnable();
+            
+            virtual ~Runnable();
+            
+            void run();
+            
+            void load(std::istream &input);
+            
+            void standard_output(Writer *writer);
+            
+            Writer &standard_output();
+            
+            void error_output(Writer *writer);
+            
+            Writer &error_output();
+            
+        protected:
+            
+            virtual void before_initialize() = 0;
+            
+        private:
+                        
+            boost::python::str code_;
+            Writer *standard_output_;
+            Writer *error_output_;
+
+            Runnable(const Runnable &) = delete;
+            Runnable &operator=(const Runnable &) = delete;
+            
+            friend class ScriptSystem;
+        };
+        
+        class ScriptSystem{
+        public:
+            static const ApplicationId id;
+            
+            ScriptSystem();
+            
+             ~ScriptSystem();
+            
+            void run(Runnable *script);
+            
+            bool try_run(Runnable *script);
+            
+            Runnable &current_script();
+            
+        private:
+            Runnable *current_script_;
+            std::mutex run_mutex_;
+            
+            void do_run(Runnable *script);
+            
+            ScriptSystem(const ScriptSystem &) = delete;
+            ScriptSystem &operator=(const ScriptSystem &) = delete;
+        };
 
     }
+    
+    using ScriptSystem = Script::ScriptSystem;
 
 }
 

@@ -1,5 +1,9 @@
 #include "Name.h"
 
+#include "String.h"
+#include "Resource.h"
+#include "Log.h"
+
 #include <random>
 #include <algorithm>
 #include <chrono>
@@ -7,13 +11,13 @@
 
 #include <boost/python.hpp>
 
-#include "String.h"
-
 using namespace std;
 using namespace Game;
 using namespace Game::Script;
 
 using namespace boost::python;
+
+static Log::Logger logger = Log::create_logger("default");
 
 StringPool::StringPool() {
 }
@@ -67,46 +71,29 @@ std::size_t BufferedStringPool::load(std::istream& input) {
     return result;
 }
 
-StringPoolHandle::StringPoolHandle(){}
-
-StringPoolHandle::StringPoolHandle(BufferedStringPool* pool) : BasicHandle<BufferedStringPool>(pool){
-}
-
-std::string StringPoolHandle::next() {
-    BufferedStringPool *pool = object();
-    if(!pool->has_more()){
-        pool->reset();
-    }
-    return pool->next();
-}
+Script::StringPoolHandle::StringPoolHandle() : pool_(){};
 
 void StringPoolHandle::add(const std::string& value) {
-    object()->add(value);
+    pool_.add(value);
 }
 
-StringPoolHandle StringPoolManager::create_empty(const Id& id) {
-    BufferedStringPool *pool = new BufferedStringPool();
-    try{
-        return add(id, pool);
-    }catch(...){
-        throw;
-    }
+void StringPoolHandle::load_from_file(const ResourceId& id) {
+    ifstream input;
+    ApplicationSystem<ResourceSystem>::instance().open_string_pool(id, input);
+    pool_.load(input);
 }
 
-StringPoolHandle StringPoolManager::create_from_file(const Id& id, const std::string path) {
-    std::ifstream input{path.c_str()};
-    BufferedStringPool *pool = new BufferedStringPool();
-    try{
-        pool->load(input);
-        return add(id, pool);
-    }catch(...){
-        throw;
-    }
-}
+void python_log(const char *data){
+    logger.debug(data);
+};
 
-BOOST_PYTHON_MODULE(namegenerator)
+BOOST_PYTHON_MODULE(NameGenerator)
 {
-    class_<StringPoolManager>("StringPoolManager")
-            .def("create_empty", &StringPoolManager::create_empty)
-            .def("create_from_file", &StringPoolManager::create_from_file);
+    class_<StringPoolHandle>("StringPool")
+            .def("load_from_file", &StringPoolHandle::load_from_file)
+            .def("add", &StringPoolHandle::add);
+}
+
+void Script::NameScript::before_initialize(){
+    PyImport_AppendInittab( "NameGenerator", &initNameGenerator);
 }

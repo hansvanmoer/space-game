@@ -79,19 +79,51 @@ namespace Game{
     };
     
     std::ostream &operator<<(std::ostream &output, const ModuleDescriptor &descriptor);
-    
+
+    ///
+    /// \class a singleton containing the current module and several utility functions for module related resources
+    ///
     class ModuleSystem{
     public:
         
+        ///
+        /// the module subsystem id
+        ///
         static const ApplicationId id;
         
-        ModuleSystem(const ModuleId &module_id);
+        ///
+        /// Creates a new module system and loads the descriptor
+        /// \param module_id the id of the module to load
+        /// \param language_id the user's preferred language (may be overridden when it is not supported by the module)
+        ///
+        ModuleSystem(const ModuleId &module_id, const LanguageId &language_id);
+        
+        ///
+        /// Localizes the supplied path
+        /// If the localized path does not point to a valid file or folder this method is a no-op
+        /// e.g. names/ship.names -> #MODULES_PATH#/#MODULE_ID#/default/names/#LANGUAGE_ID#/ship.names
+        /// \param resource_path the path to localize
+        /// \return true if the path was localized, false otherwise
+        ///
+        bool localize_path(boost::filesystem::path &resource_path) const;
+        
+        ///
+        /// Normalizes the supplied path
+        /// If the normalized path does not point to a valid file or folder this method is a no-op
+        /// e.g. names/ship.names -> #MODULES_PATH#/#MODULE_ID#/default/names/ship.names
+        /// \param resource_path the path to normalize
+        /// \return true if the path was normalized, false otherwise
+        ///
+        bool normalize_path(boost::filesystem::path &resource_path) const;
         
     private:
+        LanguageId language_id_;
         boost::filesystem::path path_;
         ModuleDescriptor descriptor_;
         
         void load_module_descriptor(const ModuleId &id);
+        
+        boost::filesystem::path create_localized_path(const boost::filesystem::path &path, const LanguageId &language_id) const;
     };
     
 }

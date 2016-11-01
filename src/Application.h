@@ -127,7 +127,7 @@ namespace Game {
             if (instance_) {
                 throw ApplicationError{System::id, "application system already started"};
             } else {
-                instance_ = new System{std::forward<Args...>(args)...};
+                instance_ = new System{std::forward<Args>(args)...};
                 return *instance_;
             }
         };
@@ -172,7 +172,7 @@ namespace Game {
         /// \param args the parameters that need to be forwarded to the subsystem's constructor
         ///
         template<typename... Args> ApplicationSystemGuard(Args &&... args){
-            ApplicationSystem<System>::initialize(std::forward<Args...>(args)...);
+            ApplicationSystem<System>::initialize(std::forward<Args>(args)...);
         };
         
         ///

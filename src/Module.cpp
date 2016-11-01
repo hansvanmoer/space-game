@@ -105,7 +105,7 @@ ostream &Game::operator <<(ostream& output, const ModuleDescriptor& descriptor){
 const ApplicationId ModuleSystem::id{"module"};
 
 
-ModuleSystem::ModuleSystem(const ModuleId& module_id) : descriptor_(){
+ModuleSystem::ModuleSystem(const ModuleId& module_id, const LanguageId &language_id) : descriptor_(){
     namespace fs = boost::filesystem;
 
     logger.info("loading module ", id);
@@ -115,6 +115,13 @@ ModuleSystem::ModuleSystem(const ModuleId& module_id) : descriptor_(){
         throw ApplicationError{id, "module folder not found: " + path_.string()};
     }
     load_module_descriptor(id);
+    if(find(descriptor_.supported_language_ids.begin(), descriptor_.supported_language_ids.end(), language_id) == descriptor_.supported_language_ids.end()){
+        logger.warning("module does not support language", language_id);
+        language_id_ = descriptor_.default_language_id;
+        logger.warning("language set to module default", language_id_);
+    }else{
+        language_id_ = language_id;
+    }
 }
 
 void ModuleSystem::load_module_descriptor(const ModuleId &id) {
@@ -134,3 +141,37 @@ void ModuleSystem::load_module_descriptor(const ModuleId &id) {
     logger.debug_lines("module descriptor: ", descriptor_);
 }
 
+bool ModuleSystem::normalize_path(boost::filesystem::path& resource_path) const {
+    namespace fs = boost::filesystem;
+    fs::path result = path_ / resource_path;
+    if(fs::is_regular_file(result) || fs::is_directory(result)){
+        resource_path = result;
+        return true;
+    }else{
+        return false;
+    }
+}
+
+boost::filesystem::path ModuleSystem::create_localized_path(const boost::filesystem::path& path, const LanguageId& language_id) const {
+    namespace fs = boost::filesystem;
+    fs::path parent = path.parent_path();
+    return parent / fs::path{language_id} / path.filename();
+}
+
+
+bool ModuleSystem::localize_path(boost::filesystem::path& resource_path) const {
+    namespace fs = boost::filesystem;
+    fs::path language_path = create_localized_path(resource_path, language_id_);
+    if(fs::is_regular_file(language_path) || fs::is_directory(language_path)){
+        resource_path = language_path;
+        return true;
+    }else{
+        language_path = create_localized_path(resource_path, descriptor_.default_language_id);
+        if(fs::is_regular_file(language_path) || fs::is_directory(language_path)){
+            resource_path = language_path;
+            return true;
+        }else{
+            return false;
+        }
+    }
+}

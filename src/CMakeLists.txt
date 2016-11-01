@@ -50,6 +50,8 @@ find_package(PythonLibs 2.7 REQUIRED)
 add_library(python SHARED IMPORTED)
 set_property(TARGET python PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${PYTHON_INCLUDE_DIRS})
 set_property(TARGET python PROPERTY IMPORTED_LOCATION ${PYTHON_LIBRARIES})
+include_directories(${PYTHON_INCLUDE_DIRS})
+
 
 #
 # Print dependencies
@@ -64,8 +66,9 @@ set_property(TARGET python PROPERTY IMPORTED_LOCATION ${PYTHON_LIBRARIES})
 #
 add_subdirectory(property)
 
-include_directories(${PYTHON_INCLUDE_DIRS})
+#
+# Build application
+#
 
-
-add_executable(space Log.cpp Application.cpp Script.cpp Metrics.cpp Object.cpp Orbit.cpp Name.cpp Module.cpp CLI.cpp Parser.cpp  FileSystem.cpp main.cpp)
+add_executable(space Log.cpp Application.cpp Script.cpp Metrics.cpp Object.cpp Orbit.cpp Name.cpp Module.cpp CLI.cpp Parser.cpp FileSystem.cpp Resource.cpp main.cpp)
 target_link_libraries(space property python boost-python boost-filesystem boost-system)

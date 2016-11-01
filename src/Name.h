@@ -9,6 +9,7 @@
 #define	GAME_NAME_H
 
 #include "Script.h"
+#include "Resource.h"
 
 #include <string>
 #include <iostream>
@@ -147,24 +148,21 @@ namespace Game{
     
     namespace Script{
     
-        class StringPoolHandle : public BasicHandle<BufferedStringPool>{
+        class StringPoolHandle{
         public:
             StringPoolHandle();
             
-            StringPoolHandle(BufferedStringPool *pool);
-            
-            std::string next();
+            void load_from_file(const ResourceId &id);
             
             void add(const std::string &value);
+            
+        private:
+            BufferedStringPool pool_;
         };
         
-        class StringPoolManager : public ObjectManager<BufferedStringPool, StringPoolHandle>{
-        public:
-            
-            StringPoolHandle create_from_file(const Id &id, const std::string path);
-            
-            StringPoolHandle create_empty(const Id &id);
-            
+        class NameScript : public Runnable{
+        protected:
+            void before_initialize();
         };
     }
 }

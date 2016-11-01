@@ -8,6 +8,8 @@
 #include "Log.h"
 #include "Module.h"
 #include "Parser.h"
+#include "Resource.h"
+#include "Script.h"
 
 using namespace Game;
 using namespace Game::CLI;
@@ -60,6 +62,8 @@ int main(int arg_count, const char **args) {
     logger.debug("initializing with the following parameters:").debug_lines(call);    
     
     ApplicationSystemGuard<FileSystem> file_system_guard(call);
-    ApplicationSystemGuard<ModuleSystem> module_system_guard(call.arguments["module ID"]);
+    ApplicationSystemGuard<ModuleSystem> module_system_guard(call.arguments["module ID"], call.arguments["language ID"]);
+    ApplicationSystemGuard<ScriptSystem> script_system_guard;
+    ApplicationSystemGuard<ResourceSystem> resource_system;
     return 0;
 }
