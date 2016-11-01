@@ -48,6 +48,9 @@ void LoggerWriter::write(const char *output){
 void LoggerWriter::flush(){
     if(dirty_){
         logger_(buffer_.str());
+        buffer_.str("");
+        buffer_.clear();
+        dirty_ = false;
     }
 }
 
@@ -108,17 +111,18 @@ BOOST_PYTHON_MODULE(GameUtils) {
 Runnable::Runnable() : code_(), standard_output_(new IgnoreWriter{}), error_output_(new IgnoreWriter{}) {
 }
 
-Runnable::~Runnable() {
-    delete error_output_;
-    delete standard_output_;
+Runnable::~Runnable() {}
+
+void Runnable::output(const std::shared_ptr<Writer> &writer){
+    error_output(writer);
+    standard_output(writer);
 }
 
-void Runnable::error_output(Writer* writer) {
-    delete error_output_;
+void Runnable::error_output(const std::shared_ptr<Writer> &writer) {
     if(writer){
         error_output_ = writer;
     }else{
-        error_output_ = new IgnoreWriter{};
+        error_output_ = std::shared_ptr<Writer>{new IgnoreWriter{}};
     }
 }
 
@@ -130,12 +134,11 @@ Writer &Runnable::standard_output(){
     return *standard_output_;
 }
 
-void Runnable::standard_output(Writer* writer) {
-    delete standard_output_;
+void Runnable::standard_output(const std::shared_ptr<Writer> &writer) {
     if(writer){
         standard_output_ = writer;
     }else{
-        error_output_ = new IgnoreWriter{};
+        error_output_ = std::shared_ptr<Writer>{new IgnoreWriter{}};
     }
 }
 

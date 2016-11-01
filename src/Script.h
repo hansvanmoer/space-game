@@ -15,6 +15,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <mutex>
+#include <memory>
 
 #include <boost/python.hpp>
 
@@ -241,11 +242,13 @@ namespace Game {
             
             void load(std::istream &input);
             
-            void standard_output(Writer *writer);
+            void output(const std::shared_ptr<Writer> &writer);
+            
+            void standard_output(const std::shared_ptr<Writer> &writer);
             
             Writer &standard_output();
             
-            void error_output(Writer *writer);
+            void error_output(const std::shared_ptr<Writer> &writer);
             
             Writer &error_output();
             
@@ -256,8 +259,8 @@ namespace Game {
         private:
                         
             boost::python::str code_;
-            Writer *standard_output_;
-            Writer *error_output_;
+            std::shared_ptr<Writer> standard_output_;
+            std::shared_ptr<Writer> error_output_;
 
             Runnable(const Runnable &) = delete;
             Runnable &operator=(const Runnable &) = delete;

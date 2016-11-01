@@ -3,6 +3,8 @@
 #include "Log.h"
 #include "Name.h"
 
+#include <memory>
+
 #include <boost/filesystem.hpp>
 
 using namespace Game;
@@ -41,7 +43,7 @@ void ResourceSystem::load_names(const ModuleSystem &module) {
     }
     std::ifstream input{system_name_generator_path.c_str()};
     Script::NameScript script;
-    script.standard_output(new Script::LoggerWriter{logger});
+    script.output(shared_ptr<Script::Writer>{new Script::LoggerWriter{logger}});
     script.load(input);
     script.run();
 }
