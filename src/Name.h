@@ -15,6 +15,7 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
+#include <stdexcept>
 
 namespace Game{
     
@@ -48,6 +49,19 @@ namespace Game{
     };
     
     ///
+    /// \class an error type for all errors related to a StringPool
+    ///
+    class StringPoolError : public std::runtime_error{
+    public:
+        
+        ///
+        /// Creates a new StringPool
+        /// \param message the message for this error
+        ///
+        StringPoolError(const std::string &message);
+    };
+    
+    ///
     /// \class this type represents a pool of strings to be used in the construction of names
     ///
     class StringPool{
@@ -61,7 +75,7 @@ namespace Game{
         //  When this method returns false, reset() will be called
         /// \return true if this pool can generate more strings, false otherwise
         ///
-        virtual bool has_more() = 0;
+        virtual bool has_more() const = 0;
         
         ///
         /// Rests this string pool
@@ -75,6 +89,12 @@ namespace Game{
         /// \return the next name in the pool
         ///
         virtual std::string next() = 0;
+        
+        ///
+        /// Returns the next name in the pool but does not discard it
+        /// \return the next name in the pool
+        ///
+        virtual std::string peek() = 0;
         
     protected:
         
@@ -92,15 +112,10 @@ namespace Game{
                 
         ///
         /// Creates a new buffered string pool
+        /// \param randomized when set to true the strings in this pool are shuffled randomly whenever the pool is exhausted and before the next call to next() or peek()
+        /// \param exhaustible when set to true has_more() will return true if the pool is exhausted, otherwise has_more() will always return true
         ///
-        BufferedStringPool();
-        
-        ///
-        /// Adds the specified value to the string pool
-        /// \param value a pointer to a utf-8 encoded char array
-        /// \param the numbers of chars in the char array
-        ///
-        void add(const char *value, std::size_t length);
+        BufferedStringPool(bool randomized = true, bool exhaustible = false);
         
         ///
         /// Adds the specified value to the string pool
@@ -114,14 +129,22 @@ namespace Game{
         virtual ~BufferedStringPool();
         
         ///
+        /// Discards and returns the next string from the pool
+        /// The string will not be returned again until reset() was called
         /// \return the next string from the pool
         ///
         std::string next();
         
         ///
+        /// Returns the next string from the pool without discarding it
+        /// \return the next string from the pool
+        ///
+        std::string peek();
+        
+        ///
         /// \return false if all names are used exactly once after the last call to reset(), true otherwise
         ///
-        bool has_more();
+        bool has_more() const;
         
         ///
         /// Shuffles the values
@@ -140,25 +163,22 @@ namespace Game{
         /// \return the number of names added
         ///
         std::size_t load(std::istream &input);
-
+        
+        ///
+        /// Loads the values for this pool through the resource system
+        /// \param id the id of the resource
+        /// \return the number of names added
+        ///
+        void load_from_file(const ResourceId &id);
+        
     private:
         std::vector<std::string> pool_;
         std::vector<std::string>::iterator next_;
+        bool randomized_;
+        bool exhaustible_;
     };
     
     namespace Script{
-    
-        class StringPoolHandle{
-        public:
-            StringPoolHandle();
-            
-            void load_from_file(const ResourceId &id);
-            
-            void add(const std::string &value);
-            
-        private:
-            BufferedStringPool pool_;
-        };
         
         class NameScript : public Runnable{
         protected:
