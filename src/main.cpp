@@ -61,9 +61,14 @@ int main(int arg_count, const char **args) {
     
     logger.debug("initializing with the following parameters:").debug_lines(call);    
     
+    logger.debug("starting subsystems");
     ApplicationSystemGuard<FileSystem> file_system_guard(call);
     ApplicationSystemGuard<ModuleSystem> module_system_guard(call.arguments["module ID"], call.arguments["language ID"]);
     ApplicationSystemGuard<ScriptSystem> script_system_guard;
     ApplicationSystemGuard<ResourceSystem> resource_system;
+    
+    logger.debug("loading resources");
+    resource_system->load_resources();
+    
     return 0;
 }

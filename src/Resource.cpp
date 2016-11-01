@@ -25,7 +25,9 @@ ResourceNotFoundError::ResourceNotFoundError(const ResourceId& id) : ResourceErr
 
 const ApplicationId ResourceSystem::id{"resource"};
 
-ResourceSystem::ResourceSystem() {
+ResourceSystem::ResourceSystem() {}
+
+void ResourceSystem::load_resources(){
     const ModuleSystem &module{ApplicationSystem<ModuleSystem>::instance()};
     load_names(module);
 }

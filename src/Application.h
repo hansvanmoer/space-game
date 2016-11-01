@@ -125,7 +125,7 @@ namespace Game {
         ///
         template<typename... Args> static System &initialize(Args && ... args) {
             if (instance_) {
-                throw ApplicationError{System::id, "application system already started"};
+                throw ApplicationError{System::id, std::string{"application system already started: "} + System::id };
             } else {
                 instance_ = new System{std::forward<Args>(args)...};
                 return *instance_;
@@ -141,7 +141,7 @@ namespace Game {
             if (instance_) {
                 ShutDownPolicy::execute(instance_);
             } else {
-                throw ApplicationError{System::id, "application system not started"};
+                throw ApplicationError{System::id, std::string{"application system not started"} + System::id};
             }
         };
         
@@ -154,7 +154,7 @@ namespace Game {
             if (instance_) {
                 return *instance_;
             } else {
-                throw ApplicationError{System::id, "application system not started"};
+                throw ApplicationError{System::id, std::string{"application system not started"} + System::id};
             }
         };
 
@@ -188,6 +188,23 @@ namespace Game {
                 cout << "unable to shutdown application system '" << System::id << "': unknown error" << endl;
             }
         };
+        
+        System &operator*(){
+            return ApplicationSystem<System>::instance();
+        };
+        
+        const System &operator*() const{
+            return ApplicationSystem<System>::instance();
+        };
+        
+        System *operator->(){
+            return &ApplicationSystem<System>::instance();
+        };
+        
+        const System *operator->() const{
+            return &ApplicationSystem<System>::instance();
+        };
+        
         
     };
     

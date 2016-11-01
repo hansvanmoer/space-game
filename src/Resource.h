@@ -53,6 +53,8 @@ namespace Game{
         
         ResourceSystem();
         
+        void load_resources();
+        
         void shutdown();
         
         void open_string_pool(const ResourceId &id, std::ifstream &input);

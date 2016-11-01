@@ -155,7 +155,7 @@ bool ModuleSystem::normalize_path(boost::filesystem::path& resource_path) const 
 boost::filesystem::path ModuleSystem::create_localized_path(const boost::filesystem::path& path, const LanguageId& language_id) const {
     namespace fs = boost::filesystem;
     fs::path parent = path.parent_path();
-    return parent / fs::path{language_id} / path.filename();
+    return path_ / parent / fs::path{language_id} / path.filename();
 }
 
 
