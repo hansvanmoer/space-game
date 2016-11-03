@@ -12,7 +12,7 @@
 # Generated documentation by doxygen
 /doc/*
 
-# CMake configuration files
+# CMake configuration and cache files
 CMakeCache.txt
 CMakeFiles
 CMakeScripts
@@ -20,6 +20,11 @@ Makefile
 cmake_install.cmake
 install_manifest.txt
 CTestTestfile.cmake
+compile_commands.json
+/src/Testing/Temporary
 
 # CodeBlocks configuration files
 *.cbp
+
+# Netbeans configuration files
+/src/nbproject/*
