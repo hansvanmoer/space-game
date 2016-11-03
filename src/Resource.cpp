@@ -39,15 +39,11 @@ void ResourceSystem::shutdown() {
 void ResourceSystem::load_names(const ModuleSystem &module) {
     namespace fs = boost::filesystem;
     
-    fs::path system_name_generator_path{"names/generators/system.py"};
-    if(!module.normalize_path(system_name_generator_path)){
+    fs::path generators_path{"names/generators.py"};
+    if(!module.normalize_path(generators_path)){
         throw ResourceNotFoundError{"name_generator_system"};
     }
-    std::ifstream input{system_name_generator_path.c_str()};
-    Script::NameScript script;
-    script.output(shared_ptr<Script::Writer>{new Script::LoggerWriter{logger}});
-    script.load(input);
-    script.run();
+    ApplicationSystem<ScriptSystem>::instance().run_after_start(generators_path);
 }
 
 void ResourceSystem::open_string_pool(const ResourceId& id, std::ifstream& input) {

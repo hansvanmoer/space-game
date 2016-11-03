@@ -17,7 +17,21 @@
 #include <unordered_map>
 #include <stdexcept>
 
+#include <boost/python.hpp>
+
 namespace Game{
+    
+    ///
+    /// \class error type thrown when an invalid name was generated
+    ///
+    class NameError : public std::runtime_error{
+    public:
+        ///
+        /// Constructs a new name error
+        /// \param message the message for this error
+        ///
+        NameError(const std::string &message);
+    };
     
     ///
     /// \class Specifies an interface for name generation
@@ -177,14 +191,6 @@ namespace Game{
         bool randomized_;
         bool exhaustible_;
     };
-    
-    namespace Script{
-        
-        class NameScript : public Runnable{
-        protected:
-            void before_initialize();
-        };
-    }
 }
 
 #endif	/* NAME_H */

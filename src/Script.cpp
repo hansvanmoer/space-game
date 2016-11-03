@@ -15,20 +15,6 @@ static Log::Logger logger = Log::create_logger("default");
 ScriptError::ScriptError(const std::string& message) : runtime_error(message) {
 }
 
-ObjectError::ObjectError(const std::string& message) : ScriptError(message) {
-}
-
-DuplicateObjectError::DuplicateObjectError(const std::string& id) : ObjectError(string{"duplicate object id: "}
-+id) {
-}
-
-NoSuchObjectError::NoSuchObjectError(const std::string& id) : ObjectError(string{"unknown object id: "}
-+id) {
-}
-
-NullHandleError::NullHandleError() : ObjectError("null handle dereference") {
-}
-
 Writer::Writer(){}
 
 Writer::~Writer(){
@@ -54,119 +40,123 @@ void LoggerWriter::flush(){
     }
 }
 
-IgnoreWriter::IgnoreWriter() {}
+Run::Run(const std::string& context_id) : context_id_(context_id){
+}
 
-IgnoreWriter::~IgnoreWriter(){}
+Run::~Run(){}
 
-void IgnoreWriter::write(const char* output){}
+const std::string& Run::context_id() const {
+    return context_id_;
+}
 
-void IgnoreWriter::flush(){};
+RunCode::RunCode(const std::string& context_id, const std::string& code) : Run(context_id), code_(code){
+}
 
-StandardWriter::StandardWriter(){}
+void RunCode::execute(boost::python::object globals, boost::python::object locals) const {
+    boost::python::exec(code_, globals, locals);
+}
 
-StandardWriter::StandardWriter(const StandardWriter &){}
+RunFile::RunFile(const std::string& context_id, const boost::filesystem::path& file) : Run(context_id), file_(file){}
 
-StandardWriter &StandardWriter::operator=(const StandardWriter &){
-    return *this;
+void RunFile::execute(boost::python::object globals, boost::python::object locals) const{
+    boost::python::exec_file(file_.c_str(), globals, locals);
 };
 
-StandardWriter::~StandardWriter() {}
-
-void StandardWriter::write(const char *output){
-    ApplicationSystem<ScriptSystem>::instance().current_script().standard_output().write(output);
-};
-
-void StandardWriter::flush(){
-    ApplicationSystem<ScriptSystem>::instance().current_script().standard_output().flush();
-};
-
-ErrorWriter::ErrorWriter(){}
-
-ErrorWriter::ErrorWriter(const ErrorWriter &){}
-
-ErrorWriter &ErrorWriter::operator=(const ErrorWriter &){
-    return *this;
-};
-
-ErrorWriter::~ErrorWriter() {}
-
-void ErrorWriter::write(const char *output){
-    ApplicationSystem<ScriptSystem>::instance().current_script().error_output().write(output);
-};
-
-void ErrorWriter::flush(){
-    ApplicationSystem<ScriptSystem>::instance().current_script().error_output().flush();
-};
-
-static const boost::python::str redirect_logger_code{"import sys\nimport GameUtils\nsys.stdout=GameUtils.StandardWriter()\nsys.stderr=GameUtils.ErrorWriter()"};
-
-BOOST_PYTHON_MODULE(GameUtils) {
-    using namespace boost::python;
-    class_<StandardWriter>("StandardWriter")
-        .def("write", &StandardWriter::write);
-    class_<ErrorWriter>("ErrorWriter")
-        .def("write", &ErrorWriter::write);
-}
-
-Runnable::Runnable() : code_(), standard_output_(new IgnoreWriter{}), error_output_(new IgnoreWriter{}) {
-}
-
-Runnable::~Runnable() {}
-
-void Runnable::output(const std::shared_ptr<Writer> &writer){
-    error_output(writer);
-    standard_output(writer);
-}
-
-void Runnable::error_output(const std::shared_ptr<Writer> &writer) {
-    if(writer){
-        error_output_ = writer;
-    }else{
-        error_output_ = std::shared_ptr<Writer>{new IgnoreWriter{}};
-    }
-}
-
-Writer &Runnable::error_output(){
-    return *error_output_;
-};
-
-Writer &Runnable::standard_output(){
-    return *standard_output_;
-}
-
-void Runnable::standard_output(const std::shared_ptr<Writer> &writer) {
-    if(writer){
-        standard_output_ = writer;
-    }else{
-        error_output_ = std::shared_ptr<Writer>{new IgnoreWriter{}};
-    }
-}
-
-void Runnable::load(std::istream& input) {
-    streampos begin = input.tellg();
-    input.seekg(0, ios::end);
-    streamsize size = input.tellg() - begin;
-    if (size > 0) {
-        char *buffer = new char[size];
-        input.seekg(begin);
-        input.read(buffer, size);
-        code_ = str{buffer, static_cast<size_t>(size)};
-        delete[] buffer;
-    }
-}
-
-void Runnable::run() {
-    ApplicationSystem<ScriptSystem>::instance().run(this);
-    standard_output_->flush();
-    error_output_->flush();
-}
-    
 const ApplicationId ScriptSystem::id{"script"};
 
-ScriptSystem::ScriptSystem() : current_script_(), run_mutex_(){}
+ScriptSystem::ScriptSystem() : run_mutex_(), running_(), main_module_(), main_dict_(), current_module_(), after_start_(){
+    
+}
 
-ScriptSystem::~ScriptSystem(){};
+void ScriptSystem::initialize_module(const string &module_id, void (*init_function)(void)){
+    lock_guard<mutex> guard{run_mutex_};
+    if(running_){
+        throw ScriptError{string{"can't import module '"}+module_id+"' while the interpreter is running"};
+    }else{
+        PyImport_AppendInittab(module_id.c_str(), init_function);
+    }
+}
 
+bool ScriptSystem::start(){
+    lock_guard<mutex> guard{run_mutex_};
+    if(!running_){
+        Py_Initialize();
+        main_module_ = import("__main__");
+        main_dict_ = main_module_.attr("__dict__");
+        current_module_ = main_module_;
+        
+        for(Run *run : after_start_){
+            run->execute(current_module_, current_module_);
+        }
+        for(Run *run : after_start_){
+            delete run;
+        }
+        after_start_.clear();
+        return true;
+    }else{
+        return false;
+    }
+};
+
+void ScriptSystem::run(const string &code){
+    lock_guard<mutex> guard{run_mutex_};
+    if(running_){
+        boost::python::str buffer{code};
+        exec(buffer, current_module_, current_module_);
+    }else{
+        throw ScriptError{"can't run code: interpreter not running"};
+    }
+};
+
+void ScriptSystem::run(const boost::filesystem::path &script_path){
+    lock_guard<mutex> guard{run_mutex_};
+    if(running_){
+        boost::python::str buffer{script_path.c_str()};
+        exec_file(buffer, current_module_, current_module_);
+    }else{
+        throw ScriptError{"can't run code: interpreter not running"};
+    }
+};
+
+void ScriptSystem::run_after_start(const std::string& code, const std::string& context_id) {
+    after_start_.push_back(new RunCode{context_id, code});
+}
+
+void ScriptSystem::run_after_start(const boost::filesystem::path& script_path, const std::string& context_id){
+    after_start_.push_back(new RunFile{context_id, script_path});
+}
+
+void ScriptSystem::force_stop(){
+    Py_Finalize();
+}
+
+bool ScriptSystem::stop(){
+    lock_guard<mutex> guard{run_mutex_};
+    if(running_){
+        running_ = false;
+        Py_Finalize();
+        return true;
+    }else{
+        return false;
+    }
+}
+
+ScriptSystem::~ScriptSystem(){
+    for(Run *run : after_start_){
+        delete run;
+    }
+    try{
+        force_stop();
+    }catch(std::exception &e){
+        logger.error("unable to close script system:",e.what());
+    }catch(...){
+        logger.error("unable to close script system: unknown error");
+    }
+};
+
+
+
+/*
 void ScriptSystem::run(Runnable *script){
    lock_guard<mutex> run_lock{run_mutex_};
    do_run(script);
@@ -190,11 +180,17 @@ void ScriptSystem::do_run(Runnable *script){
     Py_Initialize();
     object main_module = import("__main__");
     object main_namespace = main_module.attr("__dict__");
+    current_script_->before_run(main_namespace);
     try {
         exec(redirect_logger_code, main_namespace, main_namespace);
-        exec(current_script_->code_, main_namespace, main_namespace);
+        object result = exec(current_script_->code_, main_namespace, main_namespace);
+        current_script_->before_finalize(result);
     } catch (boost::python::error_already_set const &) {
         PyErr_Print();
+    } catch(std::exception &e){
+        logger.error("an error occurred while running script", e.what());
+    }catch(...){
+        logger.error("an unknown error occurred while running script");
     }
     Py_Finalize();
     current_script_ = nullptr;
@@ -203,3 +199,5 @@ void ScriptSystem::do_run(Runnable *script){
 Runnable &ScriptSystem::current_script(){
     return *current_script_;
 };
+ * 
+ * */

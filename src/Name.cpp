@@ -19,6 +19,8 @@ using namespace boost::python;
 
 static Log::Logger logger = Log::create_logger("default");
 
+NameError::NameError(const std::string& message) : runtime_error(message){}
+
 StringPoolError::StringPoolError(const string &message) : runtime_error(message){}
 
 StringPool::StringPool() {
@@ -105,8 +107,4 @@ BOOST_PYTHON_MODULE(NameGenerator)
             .def("peek", &BufferedStringPool::peek)
             .def("has_more", &BufferedStringPool::has_more)
             .def("reset", &BufferedStringPool::reset);
-}
-
-void Script::NameScript::before_initialize(){
-    PyImport_AppendInittab( "NameGenerator", &initNameGenerator);
 }
