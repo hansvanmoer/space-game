@@ -9,13 +9,8 @@
 #include <chrono>
 #include <fstream>
 
-#include <boost/python.hpp>
-
 using namespace std;
 using namespace Game;
-using namespace Game::Script;
-
-using namespace boost::python;
 
 static Log::Logger logger = Log::create_logger("default");
 
@@ -96,15 +91,4 @@ void BufferedStringPool::load_from_file(const ResourceId& id) {
     ApplicationSystem<ResourceSystem>::instance().open_string_pool(id, input);
     load(input);
     reset();
-}
-
-BOOST_PYTHON_MODULE(NameGenerator)
-{
-    class_<BufferedStringPool>("StringPool", init<bool, bool>())
-            .def("load_from_file", &BufferedStringPool::load_from_file)
-            .def("add", &BufferedStringPool::add)
-            .def("next", &BufferedStringPool::next)
-            .def("peek", &BufferedStringPool::peek)
-            .def("has_more", &BufferedStringPool::has_more)
-            .def("reset", &BufferedStringPool::reset);
 }

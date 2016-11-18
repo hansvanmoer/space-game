@@ -11,6 +11,8 @@
 #include "Resource.h"
 #include "Script.h"
 
+#include <boost/python.hpp>
+
 using namespace Game;
 using namespace Game::CLI;
 using namespace std;
@@ -51,6 +53,7 @@ Log::Level get_log_level(const Arguments &args){
 };
 
 int main(int arg_count, const char **args) {
+        
     cout << "starting application" << endl;
     
     Call call = parse_arguments(arg_count, args);
@@ -65,10 +68,11 @@ int main(int arg_count, const char **args) {
     ApplicationSystemGuard<FileSystem> file_system_guard(call);
     ApplicationSystemGuard<ModuleSystem> module_system_guard(call.arguments["module ID"], call.arguments["language ID"]);
     ApplicationSystemGuard<ScriptSystem> script_system_guard;
-    ApplicationSystemGuard<ResourceSystem> resource_system;
+    //ApplicationSystemGuard<ResourceSystem> resource_system_guard;
+    
+    script_system_guard->run(BufferedScript{"test", "print \"Hello World\"\n"});
     
     logger.debug("loading resources");
-    resource_system->load_resources();
-    
+    //resource_system_guard->load_resources();
     return 0;
 }

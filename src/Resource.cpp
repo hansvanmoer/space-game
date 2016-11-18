@@ -43,7 +43,7 @@ void ResourceSystem::load_names(const ModuleSystem &module) {
     if(!module.normalize_path(generators_path)){
         throw ResourceNotFoundError{"name_generator_system"};
     }
-    ApplicationSystem<ScriptSystem>::instance().run_after_start(generators_path);
+    //TODO
 }
 
 void ResourceSystem::open_string_pool(const ResourceId& id, std::ifstream& input) {

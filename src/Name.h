@@ -191,6 +191,8 @@ namespace Game{
         bool randomized_;
         bool exhaustible_;
     };
+    
+    void init_name_script_module();
 }
 
 #endif	/* NAME_H */
