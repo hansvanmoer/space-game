@@ -68,11 +68,16 @@ int main(int arg_count, const char **args) {
     ApplicationSystemGuard<FileSystem> file_system_guard(call);
     ApplicationSystemGuard<ModuleSystem> module_system_guard(call.arguments["module ID"], call.arguments["language ID"]);
     ApplicationSystemGuard<ScriptSystem> script_system_guard;
-    //ApplicationSystemGuard<ResourceSystem> resource_system_guard;
+    ApplicationSystemGuard<ResourceSystem> resource_system_guard;
     
-    script_system_guard->run(BufferedScript{"test", "print \"Hello World\"\n"});
+    script_system_guard->run(BufferedScript{"test", "GameUtilsExt","print \"Hello World\"\n"});
     
     logger.debug("loading resources");
-    //resource_system_guard->load_resources();
+    resource_system_guard->load_resources();
+    
+    cout << script_system_guard->call("NameGeneratorExt", "generate_system_name", [](boost::python::object function){
+        return static_cast<string>(boost::python::extract<string>(function()));
+    });
+    
     return 0;
 }
