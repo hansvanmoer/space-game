@@ -11,8 +11,6 @@
 #include "Resource.h"
 #include "Script.h"
 
-#include <boost/python.hpp>
-
 using namespace Game;
 using namespace Game::CLI;
 using namespace std;
@@ -70,14 +68,12 @@ int main(int arg_count, const char **args) {
     ApplicationSystemGuard<ScriptSystem> script_system_guard;
     ApplicationSystemGuard<ResourceSystem> resource_system_guard;
     
-    script_system_guard->run(BufferedScript{"test", "GameUtilsExt","print \"Hello World\"\n"});
+    script_system_guard->run(ScriptContext{"GameUtilsExt"},BufferedScript{"test","print \"Hello World\"\n"});
     
     logger.debug("loading resources");
     resource_system_guard->load_resources();
     
-    cout << script_system_guard->call("NameGeneratorExt", "generate_system_name", [](boost::python::object function){
-        return static_cast<string>(boost::python::extract<string>(function()));
-    });
-    
+    cout << script_system_guard->evaluate_function<string>("NameGeneratorExt", "generate_system_name");
+
     return 0;
 }

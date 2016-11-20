@@ -43,7 +43,7 @@ void ResourceSystem::load_names(const ModuleSystem &module) {
     if(!module.normalize_path(generators_path)){
         throw ResourceNotFoundError{"name_generator_system"};
     }
-    ApplicationSystem<ScriptSystem>::instance().run(ScriptFile{"NameGeneratorExt",generators_path});
+    ApplicationSystem<ScriptSystem>::instance().run(ScriptContext{"NameGeneratorExt", {"NameGenerator"}}, ScriptFile{generators_path});
 }
 
 void ResourceSystem::open_string_pool(const ResourceId& id, std::ifstream& input) {

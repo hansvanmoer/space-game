@@ -12,21 +12,17 @@ static Log::Logger logger = Log::LoggerFactory::instance().create_logger("defaul
 
 ScriptError::ScriptError(const string& message) : runtime_error(message){};
 
-Script::Script(const string& name, const string &module_id) : name_(name), module_id_(module_id){
+Script::Script(const string& name) : name_(name){
 }
 
 const string& Script::name() const {
     return name_;
 }
 
-const string &Script::module_id() const{
-    return module_id_;
+BufferedScript::BufferedScript(const string& name, const string& code) : Script(name), code_(code){
 }
 
-BufferedScript::BufferedScript(const string& name, const string &module_id, const string& code) : Script(name, module_id), code_(code){
-}
-
-BufferedScript::BufferedScript(const string& name, const string &module_id, string &&code) : Script(name, module_id), code_(move(code)){}
+BufferedScript::BufferedScript(const string& name, string &&code) : Script(name), code_(move(code)){}
 
 boost::python::object BufferedScript::execute(boost::python::object globals, boost::python::object locals) const {
     using namespace boost::python;
@@ -34,10 +30,10 @@ boost::python::object BufferedScript::execute(boost::python::object globals, boo
     return exec(code_str, globals, locals);
 }
 
-ScriptFile::ScriptFile(const string& name, const string &module_id, const boost::filesystem::path& path) : Script(name, module_id), path_(path){
+ScriptFile::ScriptFile(const string& name, const boost::filesystem::path& path) : Script(name), path_(path){
 }
 
-ScriptFile::ScriptFile(const string &module_id, const boost::filesystem::path& path) : ScriptFile(path.filename().string(), module_id, path){
+ScriptFile::ScriptFile(const boost::filesystem::path& path) : ScriptFile(path.filename().string(), path){
 }
 
 boost::python::object ScriptFile::execute(boost::python::object globals, boost::python::object locals) const {
@@ -46,6 +42,20 @@ boost::python::object ScriptFile::execute(boost::python::object globals, boost::
     return exec_file(path_str, globals, locals);
 }
 
+ScriptContext::ScriptContext(const string &module_name) : module_name_(module_name), available_modules_(){};
+
+ScriptContext::ScriptContext(const string& module_name, const vector<string>& available_modules) : module_name_(module_name), available_modules_(available_modules){}
+
+ScriptContext::ScriptContext(const string& module_name, vector<string> && available_modules) : module_name_(module_name), available_modules_(move(available_modules)){
+}
+
+const std::string& ScriptContext::module_name() const {
+    return module_name_;
+}
+
+const std::vector<std::string>& ScriptContext::available_modules() const {
+    return available_modules_;
+}
 
 ScriptWriter::ScriptWriter() : buffer_(), dirty_(){
 }
@@ -98,18 +108,21 @@ BOOST_PYTHON_MODULE(NameGenerator){
         .def("load_from_file", &BufferedStringPool::load_from_file);
 }
 
-BOOST_PYTHON_MODULE(NameGeneratorExt){}
-
+BOOST_PYTHON_MODULE(NameGeneratorExt){
+}
 
 const ApplicationId ScriptSystem::id{"script"};
 
-ScriptSystem::ScriptSystem() : writer_(), mutex_(), extensions_(){
+ScriptSystem::ScriptSystem() : writer_(), mutex_(){
+    using namespace boost::python;
     Py_Initialize();
     initGameUtils();
     initGameUtilsExt();
     initNameGenerator();
     initNameGeneratorExt();
-    run(BufferedScript{"init_script_system", "GameUtilsExt",
+    main_module_ = import("__main__");
+    
+    run(ScriptContext{"GameUtilsExt"}, BufferedScript{"init_script_system",
             "import GameUtils\n"
             "import sys\n"
             "sys.stdout=GameUtils.ScriptWriter()\n"
@@ -124,20 +137,20 @@ ScriptWriter &ScriptSystem::writer(){
     return writer_;
 }
 
-boost::python::object ScriptSystem::extension(const string &module_id){
-    return extensions_[module_id];
-}
-
-void ScriptSystem::run(const Script& script) {
+void ScriptSystem::run(const ScriptContext &context, const Script& script) {
     lock_guard<mutex> lock{mutex_};
     using namespace boost::python;
     try{
-        object main_module = import("__main__");
-        object main_namespace = main_module.attr("__dict__");
-        object extension_module = import(script.module_id().c_str());
-        main_namespace["extensions"] = extension_module;
-        object result = script.execute(main_namespace, main_namespace);
-        extensions_[script.module_id()] = extension_module;
+        object extension_module = import(context.module_name().c_str());
+        object main_namespace = main_module_.attr("__dict__");
+        object extension_namespace = extension_module.attr("__dict__");
+        for(string dependency_name : context.available_modules()){
+            if(!main_namespace.contains(dependency_name.c_str())){
+                main_namespace[dependency_name.c_str()] = import(dependency_name.c_str());
+            }
+        }
+        object result = script.execute(main_namespace, extension_namespace);
+        main_namespace[context.module_name()] = extension_module;
     }catch(error_already_set &e){
         PyErr_Print();
         throw ScriptError{string{"an error has occurred while executing script "}+script.name()};

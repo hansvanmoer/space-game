@@ -5,8 +5,8 @@
  * Created on October 29, 2016, 3:41 PM
  */
 
-#ifndef FILESYSTEM_H
-#define	FILESYSTEM_H
+#ifndef GAME_FILESYSTEM_H
+#define	GAME_FILESYSTEM_H
 
 #include "CLI.h"
 #include "Application.h"

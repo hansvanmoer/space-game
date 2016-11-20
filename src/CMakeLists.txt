@@ -70,5 +70,5 @@ add_subdirectory(property)
 # Build application
 #
 
-add_executable(space Log.cpp Application.cpp Script.cpp Metrics.cpp Object.cpp Orbit.cpp Name.cpp Module.cpp CLI.cpp Parser.cpp FileSystem.cpp Resource.cpp main.cpp)
+add_executable(space Log.cpp ThreadPool.cpp Application.cpp Script.cpp Metrics.cpp Object.cpp Orbit.cpp Name.cpp Module.cpp CLI.cpp Parser.cpp FileSystem.cpp Resource.cpp main.cpp)
 target_link_libraries(space property python boost-python boost-filesystem boost-system)
