@@ -59,7 +59,7 @@ namespace Game{
         ///
         /// Checks if the pool is running
         /// This call may block
-        /// \return true if the pool is currently running and accepting tasks, false othrwise
+        /// \return true if the pool is currently running and accepting tasks, false otherwise
         ///
         bool running() const;
         
@@ -68,8 +68,17 @@ namespace Game{
         /// If the pool is not running, the task will be scheduled to run after the pool starts
         /// \param task should be a callable object with no parameters or return type
         ///
-        template<typename T> void submit(T task){
+        template<typename T> void submit(T &&task){
             do_submit(new TaskImpl<T>{std::forward<T>(task)});
+        };
+        
+        ///
+        /// Submit a new task
+        /// If the pool is not running, the task will be scheduled to run after the pool starts
+        /// \param task should be a callable object with no parameters or return type
+        ///
+        template<typename T> void submit(const T &task){
+            do_submit(new TaskImpl<T>{task});
         };
         
         ///
@@ -94,11 +103,13 @@ namespace Game{
         template<typename T> class TaskImpl : public Task{
         public:
             
-            explicit TaskImpl(T task) : task_(task){};
+            explicit TaskImpl(const T &task) : task_(task){};
+            
+            explicit TaskImpl(T &&task) : task_(std::move(task)){};
             
             ~TaskImpl(){};
             
-            void execute(){
+            void execute() override{
                 task_();
             };
             

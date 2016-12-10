@@ -4,6 +4,7 @@
 #include "Name.h"
 
 #include <utility>
+#include <python2.7/ceval.h>
 
 using namespace Game;
 using namespace std;
@@ -111,10 +112,32 @@ BOOST_PYTHON_MODULE(NameGenerator){
 BOOST_PYTHON_MODULE(NameGeneratorExt){
 }
 
+ScriptCallResult::ScriptCallResult(std::future<boost::python::object> &&result_future) : future_(forward<future<boost::python::object>>(result_future)){};
+
+
+ScriptCallResult::ScriptCallResult(ScriptCallResult &&result) : future_(){
+    swap(future_, result.future_);
+};
+
+ScriptCallResult &ScriptCallResult::operator=(ScriptCallResult &&result){
+    swap(future_, result.future_);
+    return *this;
+};
+
+ScriptSystem::GILGuard::GILGuard(){
+    gstate_ = PyGILState_Ensure();
+}
+
+ScriptSystem::GILGuard::~GILGuard() {
+    PyGILState_Release(gstate_);
+}
+
+
 const ApplicationId ScriptSystem::id{"script"};
 
-ScriptSystem::ScriptSystem() : writer_(), mutex_(){
+ScriptSystem::ScriptSystem(size_t executor_thread_count) : writer_(), executors_(executor_thread_count){
     using namespace boost::python;
+    
     Py_Initialize();
     initGameUtils();
     initGameUtilsExt();
@@ -127,10 +150,26 @@ ScriptSystem::ScriptSystem() : writer_(), mutex_(){
             "import sys\n"
             "sys.stdout=GameUtils.ScriptWriter()\n"
     });
+    
+    //Acquiring interpreter lock and starting threading
+    PyEval_InitThreads();
+    main_thread_state_ = PyThreadState_Get();
+    
+    //Release interpreter lock
+    PyEval_ReleaseLock();
+    
+    executors_.start();
 }
 
 ScriptSystem::~ScriptSystem(){
-    Py_Finalize();
+    executors_.stop();
+    
+    // IMPORTANT: I need to acquire the GIL before attempting to finalize
+    PyEval_AcquireLock();
+    
+    // Swap main thread state back in: otherwise the thread state of the last executed thread is used and Py_Finalize segfaults
+    PyThreadState_Swap(main_thread_state_); 
+    Py_Finalize();    
 }
 
 ScriptWriter &ScriptSystem::writer(){
@@ -138,7 +177,7 @@ ScriptWriter &ScriptSystem::writer(){
 }
 
 void ScriptSystem::run(const ScriptContext &context, const Script& script) {
-    lock_guard<mutex> lock{mutex_};
+    GILGuard guard;
     using namespace boost::python;
     try{
         object extension_module = import(context.module_name().c_str());

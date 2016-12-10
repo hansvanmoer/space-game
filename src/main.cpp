@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
+#include <future>
 
 #include "Name.h"
 #include "CLI.h"
@@ -10,6 +11,7 @@
 #include "Parser.h"
 #include "Resource.h"
 #include "Script.h"
+#include "ThreadPool.h"
 
 using namespace Game;
 using namespace Game::CLI;
@@ -50,6 +52,10 @@ Log::Level get_log_level(const Arguments &args){
     }
 };
 
+template<typename T> T add(T first, T second){
+    return first + second;
+};
+
 int main(int arg_count, const char **args) {
         
     cout << "starting application" << endl;
@@ -73,7 +79,15 @@ int main(int arg_count, const char **args) {
     logger.debug("loading resources");
     resource_system_guard->load_resources();
     
-    cout << script_system_guard->evaluate_function<string>("NameGeneratorExt", "generate_system_name");
-
+    //cout << script_system_guard->evaluate_function<string>("NameGeneratorExt", "generate_system_name");
+    //cout << script_system_guard->submit_call<std::string, std::string>("NameGeneratorExt", "generate_system_name", std::string{"test test"}).get();
+    
+    
+    auto fn = script_system_guard->bind("NameGeneratorExt", "generate_system_name");
+    
+    ScriptCallResult result = script_system_guard->submit_call(fn);
+    
+    cout << result.get<std::string>() << endl;
+        
     return 0;
 }
